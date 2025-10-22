@@ -5,9 +5,11 @@ RUN apk add --no-cache \
     bind-tools \
     iptables \
     ip6tables \
-    openvpn
+    openvpn \
+    tinyproxy
 
 COPY . /usr/local/bin
+RUN mv /usr/local/bin/tinyproxy.conf /etc/tinyproxy/tinyproxy.conf
 
 ENV KILL_SWITCH=on
 

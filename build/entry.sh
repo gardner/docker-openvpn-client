@@ -42,9 +42,23 @@ if [[ $AUTH_SECRET ]]; then
     openvpn_args+=("--auth-user-pass" "/run/secrets/$AUTH_SECRET")
 fi
 
+# Start tinyproxy if PROXY_PORT is set
+if [[ $PROXY_PORT ]]; then
+    # Create a temporary tinyproxy config with the specified port
+    envsubst < /etc/tinyproxy.conf > /tmp/tinyproxy.conf
+    tinyproxy -c /tmp/tinyproxy.conf &
+    tinyproxy_pid=$!
+    echo "tinyproxy started on port $PROXY_PORT with pid $tinyproxy_pid"
+fi
+
 openvpn "${openvpn_args[@]}" &
 openvpn_pid=$!
 
 trap cleanup TERM
 
-wait $openvpn_pid
+# Wait for both processes if tinyproxy was started
+if [[ $tinyproxy_pid ]]; then
+    wait $openvpn_pid $tinyproxy_pid
+else
+    wait $openvpn_pid
+fi
